@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Racing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            width: 300px;
+            height: 500px;
+            margin: 20px auto;
+            border: 2px solid black;
+            position: relative;
+            overflow: hidden;
+            background: #2c3e50;
+        }
+        .road {
+            width: 100%;
+            height: 100%;
+            background: url('https://www.freeiconspng.com/uploads/road-png-6.png') repeat-y center;
+            background-size: cover;
+            position: absolute;
+            top: 0;
+            animation: moveRoad 3s linear infinite;
+        }
+        @keyframes moveRoad {
+            from { top: 0; }
+            to { top: -100%; }
+        }
+        .car {
+            width: 50px;
+            height: 80px;
+            background: red;
+            position: absolute;
+            bottom: 20px;
+            left: 125px;
+            border-radius: 5px;
+        }
+        .obstacle {
+            width: 50px;
+            height: 80px;
+            background: blue;
+            position: absolute;
+            top: -100px;
+            border-radius: 5px;
+        }
+        .score {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        .game-over {
+            font-size: 24px;
+            color: red;
+            font-weight: bold;
+            display: none;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .arrow {
+            width: 50px;
+            height: 50px;
+            margin: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            background: gray;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            outline: none;
+        }
+        .arrow:active {
+            background: darkgray;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Car Racing Game</h2>
+    <p class="score">Score: <span id="score">0</span></p>
+    <div class="game-container">
+        <div class="road"></div>
+        <div class="car" id="player"></div>
+    </div>
+    <p class="game-over" id="gameOver">Game Over! Refresh to Restart</p>
+
+    <!-- On-Screen Controls -->
+    <div class="controls">
+        <button class="arrow" onclick="moveLeft()">⬅</button>
+        <button class="arrow" onclick="moveRight()">➡</button>
+    </div>
+
+    <script>
+        const player = document.getElementById("player");
+        const gameContainer = document.querySelector(".game-container");
+        const scoreDisplay = document.getElementById("score");
+        const gameOverText = document.getElementById("gameOver");
+
+        let playerPos = 125; 
+        let score = 0;
+        let gameRunning = true;
+
+        document.addEventListener("keydown", (event) => {
+            if (!gameRunning) return;
+
+            if (event.key === "ArrowLeft") moveLeft();
+            if (event.key === "ArrowRight") moveRight();
+        });
+
+        function moveLeft() {
+            if (!gameRunning || playerPos <= 50) return;
+            playerPos -= 75;
+            player.style.left = playerPos + "px";
+        }
+
+        function moveRight() {
+            if (!gameRunning || playerPos >= 200) return;
+            playerPos += 75;
+            player.style.left = playerPos + "px";
+        }
+
+        function createObstacle() {
+            if (!gameRunning) return;
+
+            let obstacle = document.createElement("div");
+            obstacle.classList.add("obstacle");
+            let randomPos = [50, 125, 200][Math.floor(Math.random() * 3)];
+            obstacle.style.left = randomPos + "px";
+            obstacle.style.top = "-80px";
+            gameContainer.appendChild(obstacle);
+
+            let moveObstacle = setInterval(() => {
+                if (!gameRunning) {
+                    clearInterval(moveObstacle);
+                    return;
+                }
+
+                let obstacleTop = parseInt(window.getComputedStyle(obstacle).getPropertyValue("top"));
+                if (obstacleTop > 500) {
+                    obstacle.remove();
+                    score++;
+                    scoreDisplay.textContent = score;
+                    clearInterval(moveObstacle);
+                } else {
+                    obstacle.style.top = obstacleTop + 5 + "px";
+                }
+
+                if (checkCollision(player, obstacle)) {
+                    endGame();
+                    clearInterval(moveObstacle);
+                }
+            }, 30);
+        }
+
+        function checkCollision(car, obs) {
+            let carRect = car.getBoundingClientRect();
+            let obsRect = obs.getBoundingClientRect();
+
+            return (
+                carRect.left < obsRect.right &&
+                carRect.right > obsRect.left &&
+                carRect.top < obsRect.bottom &&
+                carRect.bottom > obsRect.top
+            );
+        }
+
+        function endGame() {
+            gameRunning = false;
+            gameOverText.style.display = "block";
+            document.querySelectorAll(".obstacle").forEach((obs) => obs.remove());
+        }
+
+        setInterval(createObstacle, 1000);
+    </script>
+
+</body>
+</html>
+
